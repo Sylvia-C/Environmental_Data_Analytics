@@ -3,6 +3,8 @@ title: "Assignment 2: Coding Basics"
 author: "Siying Chen"
 output: pdf_document
 geometry: margin=2.54cm
+editor_options: 
+  chunk_output_type: console
 ---
 
 ## OVERVIEW
@@ -89,8 +91,17 @@ pass_or_not <- function(x){
   if(x > 50) {TRUE}
   else {FALSE}
 }
+
+# Or, create a function with ifelse statement
+pass_or_not_ifelse <- function(x){
+  ifelse(x>50, TRUE, FALSE)
+}
+
+# Apply function to the score vector
+pass_or_not_ifelse(score)
+
 ```
 
 12. QUESTION: Which option of `if` and `else` vs. `ifelse` worked? Why?
 
-> ANSWER: I only used 'if' and 'else' since there are only two conditions
+> ANSWER: Only the ifelse statement work in this situation. When running the if and else statement, there's a warning message saying that the condition/vector has more than one elements and thus only the first element will be used. In other words, the if and else statement only run for the first number in the score vector.
