@@ -93,17 +93,18 @@ USGS.flow.data$datetime <- as.Date(USGS.flow.data$datetime, format = "%m/%d/%y")
 Note that for every date prior to 1969, R has assigned the date in the 2000s rather than the 1900s. This can be fixed with an `ifelse` statement inside a function. Run through the code below and write what is happening in the comment above each line.
 
 ```{r}
-# 
+# Rearrange the datetime format as year month date
 USGS.flow.data$datetime <- format(USGS.flow.data$datetime, "%y%m%d")
 
-#
+# Create a function that if d is greater than 181231, give 19, if not give 20, ammend them in the cell before the date
 create.early.dates <- (function(d) {
        paste0(ifelse(d > 181231,"19","20"),d)
        })
-#
+
+# Assign the new dates above as the new datetime
 USGS.flow.data$datetime <- create.early.dates(USGS.flow.data$datetime)
 
-#
+# Rearrange the format as year month date
 USGS.flow.data$datetime <- as.Date(USGS.flow.data$datetime, format = "%Y%m%d") 
 
 ```
@@ -118,10 +119,10 @@ summary(USGS.flow.data$gage.height.mean)
 ```
 Question: What types of research questions might make it favorable to remove NAs from a dataset, and what types of research questions might make it favorable to retain NAs in the dataset?
 
-> Answer: 
+> Answer: In certain dataset like social science, NAs are meaningful so you want to keep them, R might treat blank cell as NAs too. Or in water quality data, NA may be unditectable rather than 0, so make sure you read the readme file first.
 
 ```{r}
-USGS.flow.data.complete <- na.omit(USGS.flow.data)
+USGS.flow.data.complete <- na.omit(USGS.flow.data) # Delete the rows with any NA in it
 dim(USGS.flow.data)
 dim(USGS.flow.data.complete)
 
@@ -143,7 +144,7 @@ Visualize count data for categorical variables.
 
 ```{r, fig.height = 3, fig.width = 4}
 ggplot(USGS.flow.data.complete, aes(x = discharge.mean.approval)) +
-  geom_bar()
+  geom_bar() #A in the chart means approved and P means pending, depends on when you pull data from USGS
 ```
 
 ### Histogram (function: geom_histogram)
@@ -151,24 +152,24 @@ ggplot(USGS.flow.data.complete, aes(x = discharge.mean.approval)) +
 Visualize distributions of values for continuous numerical variables. What is happening in each line of code? Insert a comment above each line.
 
 ```{r, fig.height = 3, fig.width = 4}
-#
+# Histogram of mean discharge, gives a warning to use a better binwidth value
 ggplot(USGS.flow.data.complete) +
   geom_histogram(aes(x = discharge.mean))
 
-#
+# Histogram of mean discharge,create a bin every 10 units
 ggplot(USGS.flow.data.complete) +
   geom_histogram(aes(x = discharge.mean), binwidth = 10)
 
-#
+# Histogram of mean discharge, gives 20 bins
 ggplot(USGS.flow.data.complete) +
   geom_histogram(aes(x = discharge.mean), bins = 20)
 
-#
+# Histogram of mean discharge, with binwidth of 10, zoom in on scale 0-500
 ggplot(USGS.flow.data.complete, aes(x = discharge.mean)) +
   geom_histogram(binwidth = 10) + 
   scale_x_continuous(limits = c(0, 500))
   
-#
+# Histogram of mean gage height
 ggplot(USGS.flow.data.complete) +
   geom_histogram(aes(x = gage.height.mean))
 
@@ -178,14 +179,14 @@ ggplot(USGS.flow.data.complete) +
 An alternate to a histogram is a frequency polygon graph (distributions of values for continuous numerical variables). Instead of displaying bars,  counts of continuous variables are displayed as lines. This is advantageous if you want to display multiple variables or categories of variables at once.
 
 ```{r, fig.height = 3, fig.width = 4}
-#
+# Frequency line graph of gage height, zoom in at scale 1-10, useful to have all things in similar units
 ggplot(USGS.flow.data.complete) +
   geom_freqpoly(aes(x = gage.height.mean), bins = 50) +
   geom_freqpoly(aes(x = gage.height.min), bins = 50, color = "blue") +
   geom_freqpoly(aes(x = gage.height.max), bins = 50, color = "red") +
   scale_x_continuous(limits = c(0, 10))
 
-#
+# ploting the mean gage height, divided by categorical variables 
 ggplot(USGS.flow.data.complete) +
   geom_freqpoly(aes(x = gage.height.mean, color = gage.height.mean.approval), bins = 50) +
   scale_x_continuous(limits = c(0, 10)) +
@@ -207,15 +208,15 @@ A box-and-whisker plot is yet another alternative to histograms (distributions o
 An alternate option is a violin plot, which displays density distributions, somewhat like a hybrid of the box-and-whiskers and the frequency polygon plot.
 
 ```{r, fig.height = 3, fig.width = 4}
-#
+# boxplot of mean gage height, divided by approval
 ggplot(USGS.flow.data.complete) +
   geom_boxplot(aes(x = gage.height.mean.approval, y = gage.height.mean))
 
-#
+# take gage height mean, divided by 1, discharge associated with gage height, the higher gage height, the more discharge
 ggplot(USGS.flow.data.complete) +
   geom_boxplot(aes(x = gage.height.mean, y = discharge.mean, group = cut_width(gage.height.mean, 1)))
 
-#
+# violin plot, the horizontal lines within the shape are the quantiles
 ggplot(USGS.flow.data.complete) +
   geom_violin(aes(x = gage.height.mean.approval, y = gage.height.mean), draw_quantiles = c(0.25, 0.5, 0.75))
 ```
