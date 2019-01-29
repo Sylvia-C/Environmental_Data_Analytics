@@ -75,6 +75,9 @@ student_grades <- data.frame(name, score, passing)
 
 # Label dataframe columns
 names(student_grades) <- c('Name', 'Score', 'Passed'); View(student_grades)
+
+# Show the first few lines
+head(student_grades)
 ```
 
 9. QUESTION: How is this data frame different from a matrix?
