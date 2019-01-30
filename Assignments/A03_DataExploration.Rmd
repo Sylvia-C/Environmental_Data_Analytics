@@ -1,8 +1,10 @@
 ---
 title: "Assignment 3: Data Exploration"
-author: "Student Name"
+author: "Siying Chen"
 output: pdf_document
 geometry: margin=2.54cm
+editor_options: 
+  chunk_output_type: console
 ---
 
 ## OVERVIEW
@@ -29,14 +31,20 @@ The completed exercise is due on Thursday, 31 January, 2019 before class begins.
 
 Check your working directory, load necessary packages (tidyverse), and upload the North Temperate Lakes long term monitoring dataset for the light, temperature, and oxygen data for three lakes (file name: NTL-LTER_Lake_ChemistryPhysics_Raw.csv). Type your code into the R chunk below.
 ```{r}
+# Check working directory and load tidyverse
+getwd()
+library(tidyverse)
 
+# Import entire dataset and view
+NTL_LTER_monitoring <- read.csv("../Data/Raw/NTL-LTER_Lake_ChemistryPhysics_Raw.csv")
+view(NTL_LTER_monitoring)
 ```
 
 ## 2) Learn about your system
 
 Read about your dataset in the NTL-LTER README file. What are three salient pieces of information you gained from reading this file?
 
-> ANSWER: 
+> ANSWER: The data are collected from the North Temperate Lakes Long Term Ecological Research website and prepared for this class. Data are obtained from studies on several lakes in the North Temperate Lakes District in Wisconsin, USA. There are two other sets of data, which are carbon data and nutrients data.
 
 ## 3) Obtain basic summaries of your data
 
@@ -50,26 +58,42 @@ Write R commands to display the following information:
 
 ```{r}
 # 1
+dim(NTL_LTER_monitoring)
 
 # 2
+class(NTL_LTER_monitoring)
 
 # 3
+head(NTL_LTER_monitoring, 8)
 
 # 4
+class(NTL_LTER_monitoring$lakename)
+class(NTL_LTER_monitoring$sampledate)
+class(NTL_LTER_monitoring$depth)
+class(NTL_LTER_monitoring$temperature)
 
 # 5
-
+summary(NTL_LTER_monitoring$lakename)
+summary(NTL_LTER_monitoring$depth)
+summary(NTL_LTER_monitoring$temperature)
 ```
 
 Change sampledate to class = date. After doing this, write an R command to display that the class of sammpledate is indeed date. Write another R command to show the first 10 rows of the date column. 
 
 ```{r}
+# Change sampledata to date format
+NTL_LTER_monitoring$sampledate <- as.Date(NTL_LTER_monitoring$sampledate, format = "%m/%d/%y") 
 
+# Check the class of sample date
+class(NTL_LTER_monitoring$sampledate)
+
+# Show the first 10 rows of sampledate column
+head(NTL_LTER_monitoring$sampledate, 10)
 ```
 
 Question: Do you want to remove NAs from this dataset? Why or why not?
 
-> ANSWER: 
+> ANSWER: Yes, because if we want to do a statistical analysis on the data, the NAs would affect our result and reduce statistical power.
 
 
 ## 4) Explore your data graphically
@@ -86,30 +110,47 @@ Write R commands to display graphs depicting:
 
 ```{r}
 # 1
+ggplot(NTL_LTER_monitoring) + 
+  geom_bar(aes(x = temperature_C))
 
 # 2
+ggplot(NTL_LTER_monitoring) +
+  geom_histogram(aes(x = temperature_C))
 
 # 3
+ggplot(NTL_LTER_monitoring) +
+  geom_histogram(aes(x = temperature_C), binwidth = 5) # binwidth of 5
+
+ggplot(NTL_LTER_monitoring) +
+  geom_histogram(aes(x = temperature_C), bin = 20) # 20 bins
 
 # 4
+ggplot(NTL_LTER_monitoring) +
+  geom_freqpoly(aes(x = temperature_C, color = lakename)) +
+  theme(legend.position = "top")
 
 # 5
+ggplot(NTL_LTER_monitoring) +
+  geom_boxplot(aes(x = lakename, y = temperature_C))
 
 # 6
+ggplot(NTL_LTER_monitoring) +
+  geom_violin(aes(x = temperature_C, y = depth), draw_quantiles = c(0.25, 0.5, 0.75))
 
 # 7 
-
+ggplot(NTL_LTER_monitoring) +
+  geom_point(aes(x = temperature_C, y = depth))
 ```
 ## 5) Form questions for further data analysis
 
 What did you find out about your data from the basic summaries and graphs you made? Describe in 4-6 sentences.
 
-> ANSWER: 
+> ANSWER: From the basic summaries, I found that Peter Lake has the most records, and Hummingbird Lake has the least records, the overall mean depth of lakes is 4.39m, the overall mean temperature is 11.81 degree with 3858 missing records. From the histogram in step 2, I found that most of the lakes have a temperature around 5 degrees. From the frequency line graph in step 4, I found that most of the lakes share similar temperature profile, which is having a frequency peak at around 5 degree and another small peak at around 22 degree. From the boxplot in step 5, I found that there are 3 outliers within the data. From the violin plot in step 6, I found that the water temperature varies a lot around the surface, but starts to become relatively stable when the depth is over 7m.
 
-What are 3 further questions you might ask as you move forward with  analysis of this dataset?
+What are 3 further questions you might ask as you move forward with analysis of this dataset?
 
-> ANSWER 1: 
+> ANSWER 1: How does dissolved oxygen change with depth?
 
-> ANSWER 2: 
+> ANSWER 2: How does irradiance change with depth, temperature and dissolved oxygen?
 
-> ANSWER 3: 
+> ANSWER 3: What are some other factors that affect the temperature/depth gradient? Like lake size or irradiance?
