@@ -112,7 +112,7 @@ EPAair_combined.tidy <- spread(EPAair_combined.filter, AQS_PARAMETER_DESC, DAILY
 dim(EPAair_combined.tidy)
 
 #11
-write.csv(EPAair_combined.tidy, row.names = FALSE, file = "./Data/Processed/EPAair_O3_PM25_NC1718_Processed.csv.csv")
+write.csv(EPAair_combined.tidy, row.names = FALSE, file = "./Data/Processed/EPAair_O3_PM25_NC1718_Processed.csv")
 
 ```
 
