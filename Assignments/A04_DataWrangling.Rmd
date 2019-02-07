@@ -42,7 +42,7 @@ library(tidyverse)
 EPA_O3_17 <- read.csv("./Data/Raw/EPAair_O3_NC2017_raw.csv")
 EPA_O3_18 <- read.csv("./Data/Raw/EPAair_O3_NC2018_raw.csv")
 EPA_PM25_17 <- read.csv("./Data/Raw/EPAair_PM25_NC2017_raw.csv")
-EPA_OM25_18 <- read.csv("./Data/Raw/EPAair_PM25_NC2018_raw.csv")
+EPA_PM25_18 <- read.csv("./Data/Raw/EPAair_PM25_NC2018_raw.csv")
 
 #2
 head(EPA_O3_17)
