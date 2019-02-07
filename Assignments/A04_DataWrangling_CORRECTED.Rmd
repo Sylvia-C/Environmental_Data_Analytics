@@ -145,8 +145,8 @@ EPAair_combined.tidy.summaryB <-
             maxPM25 = max(PM2.5))
 
 #13
-View(EPAair_combined.tidy.summaryA)
-View(EPAair_combined.tidy.summaryB)
+print(EPAair_combined.tidy.summaryA)
+print(EPAair_combined.tidy.summaryB)
 
 ```
 
