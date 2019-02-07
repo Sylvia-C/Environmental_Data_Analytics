@@ -1,6 +1,6 @@
 ---
 title: "Assignment 4: Data Wrangling"
-author: "Student Name"
+author: "Siying Chen"
 output: pdf_document
 geometry: margin=2.54cm
 editor_options: 
@@ -34,8 +34,23 @@ The completed exercise is due on Thursday, 7 February, 2019 before class begins.
 
 ```{r}
 #1
+# Check working directory
+getwd()
+# Load package
+library(tidyverse)
+# Import EPA air dataset
+EPA_O3_17 <- read.csv("./Data/Raw/EPAair_O3_NC2017_raw.csv")
+EPA_O3_18 <- read.csv("./Data/Raw/EPAair_O3_NC2018_raw.csv")
+EPA_PM25_17 <- read.csv("./Data/Raw/EPAair_PM25_NC2017_raw.csv")
+EPA_OM25_18 <- read.csv("./Data/Raw/EPAair_PM25_NC2018_raw.csv")
 
 #2
+head(EPA_O3_17)
+colnames(EPA_O3_18)
+dim(EPA_PM25_17)
+summary(EPA_PM25_18)
+class(EPA_O3_18$Date)
+
 ```
 
 ## Wrangle individual datasets to create processed files.
