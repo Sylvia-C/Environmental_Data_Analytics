@@ -1,6 +1,6 @@
 ---
 title: "Assignment 4: Data Wrangling"
-author: "Student Name"
+author: "Siying Chen"
 output: pdf_document
 geometry: margin=2.54cm
 editor_options: 
@@ -34,8 +34,22 @@ The completed exercise is due on Thursday, 7 February, 2019 before class begins.
 
 ```{r}
 #1
+# Check working directory
+getwd()
+# Load package
+library(tidyverse)
+# Import EPA air dataset
+EPA_O3_17 <- read.csv("./Data/Raw/EPAair_O3_NC2017_raw.csv")
+EPA_O3_18 <- read.csv("./Data/Raw/EPAair_O3_NC2018_raw.csv")
+EPA_PM25_17 <- read.csv("./Data/Raw/EPAair_PM25_NC2017_raw.csv")
+EPA_PM25_18 <- read.csv("./Data/Raw/EPAair_PM25_NC2018_raw.csv")
 
 #2
+head(EPA_O3_17)
+colnames(EPA_O3_18)
+dim(EPA_PM25_17)
+summary(EPA_PM25_18)
+class(EPA_O3_18$Date)
 ```
 
 ## Wrangle individual datasets to create processed files.
@@ -46,12 +60,26 @@ The completed exercise is due on Thursday, 7 February, 2019 before class begins.
 
 ```{r}
 #3
+EPA_O3_17$Date <- as.Date(EPA_O3_17$Date, format = "%m/%d/%y")
+EPA_O3_18$Date <- as.Date(EPA_O3_18$Date, format = "%m/%d/%y")
+EPA_PM25_17$Date <- as.Date(EPA_PM25_17$Date, format = "%m/%d/%y")
+EPA_PM25_18$Date <- as.Date(EPA_PM25_18$Date, format = "%m/%d/%y")
 
 #4
+EPA_O3_17.select <- select(EPA_O3_17, Date, DAILY_AQI_VALUE, Site.Name, AQS_PARAMETER_DESC, COUNTY, SITE_LATITUDE, SITE_LONGITUDE)
+EPA_O3_18.select <- select(EPA_O3_18, Date, DAILY_AQI_VALUE, Site.Name, AQS_PARAMETER_DESC, COUNTY, SITE_LATITUDE, SITE_LONGITUDE)
+EPA_PM25_17.select <- select(EPA_PM25_17, Date, DAILY_AQI_VALUE, Site.Name, AQS_PARAMETER_DESC, COUNTY, SITE_LATITUDE, SITE_LONGITUDE)
+EPA_PM25_18.select <- select(EPA_PM25_18, Date, DAILY_AQI_VALUE, Site.Name, AQS_PARAMETER_DESC, COUNTY, SITE_LATITUDE, SITE_LONGITUDE)
 
 #5
+EPA_PM25_17.select$AQS_PARAMETER_DESC <- "PM2.5"
+EPA_PM25_18.select$AQS_PARAMETER_DESC <- "PM2.5"
 
 #6
+write.csv(EPA_O3_17.select, row.names = FALSE, file = "./Data/Processed/EPAair_O3_NC2017_Processed.csv")
+write.csv(EPA_O3_18.select, row.names = FALSE, file = "./Data/Processed/EPAair_O3_NC2018_Processed.csv")
+write.csv(EPA_PM25_17.select, row.names = FALSE, file = "./Data/Processed/EPAair_PM25_NC2017_Processed.csv")
+write.csv(EPA_PM25_18.select, row.names = FALSE, file = "./Data/Processed/EPAair_PM25_NC2018_Processed.csv")
 
 ```
 
@@ -68,13 +96,23 @@ The completed exercise is due on Thursday, 7 February, 2019 before class begins.
 11. Save your processed dataset with the following file name: "EPAair_O3_PM25_NC1718_Processed.csv"
 
 ```{r}
+#7
+EPAair_combined <- rbind(EPA_O3_17.select, EPA_O3_18.select, EPA_PM25_17.select, EPA_PM25_18.select)
+
 #8
+EPAair_combined.filter <- 
+  EPAair_combined %>%
+  filter(Site.Name == "Blackstone" | Site.Name == "Bryson City" | Site.Name == "Triple Oak") %>%
+  separate(Date, c("Y", "m"), remove = FALSE)
 
 #9
+EPAair_combined.tidy <- spread(EPAair_combined.filter, AQS_PARAMETER_DESC, DAILY_AQI_VALUE)
 
 #10
+dim(EPAair_combined.tidy)
 
 #11
+write.csv(EPAair_combined.tidy, row.names = FALSE, file = "./Data/Processed/EPAair_O3_PM25_NC1718_Processed.csv.csv")
 
 ```
 
@@ -87,10 +125,28 @@ b. A summary table of the mean, minimum, and maximum AQI values of O3 and PM2.5 
 
 ```{r}
 #12a
+EPAair_combined.tidy.summaryA <- 
+  EPAair_combined.tidy %>%
+  group_by(m) %>%
+  filter(!is.na(Ozone) & !is.na(PM2.5)) %>%
+  summarise(meanO3 = mean(Ozone),
+            meanPM25 = mean(PM2.5))
 
 #12b
+EPAair_combined.tidy.summaryB <- 
+  EPAair_combined.tidy %>%
+  group_by(Site.Name) %>%
+  filter(!is.na(Ozone) & !is.na(PM2.5)) %>%
+  summarise(meanO3 = mean(Ozone),
+            minO3 = min(Ozone),
+            maxO3 = max(Ozone),
+            meanPM25 = mean(PM2.5),
+            minPM25 = min(PM2.5),
+            maxPM25 = max(PM2.5))
 
 #13
+View(EPAair_combined.tidy.summaryA)
+View(EPAair_combined.tidy.summaryB)
 
 ```
 
