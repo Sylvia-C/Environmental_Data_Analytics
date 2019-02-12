@@ -22,7 +22,7 @@ library(tidyverse)
 PeterPaul.chem.nutrients <- read.csv("./Data/Processed/NTL-LTER_Lake_Chemistry_Nutrients_PeterPaul_Processed.csv")
 PeterPaul.nutrients.gathered <- read.csv("./Data/Processed/NTL-LTER_Lake_Nutrients_PeterPaulGathered_Processed.csv")
 PeterPaul.chem.nutrients.summaries <- read.csv("./Data/Processed/NTL-LTER_Lake_Summaries_PeterPaul_Processed.csv")
-EPAair <- read.csv("./Data/Processed/EPAair_O3PM25_3sites1718_processed.csv")
+EPAair <- read.csv("./Data/Processed/EPAair_O3_PM25_NC1718_Processed.csv")
 
 EPAair$Date <- as.Date(EPAair$Date, format = "%Y-%m-%d")
 PeterPaul.chem.nutrients$sampledate <- as.Date(PeterPaul.chem.nutrients$sampledate, format = "%Y-%m-%d")
@@ -78,26 +78,30 @@ print(O3plot)
 
 # Fix this code
 O3plot2 <- ggplot(EPAair) +
-  geom_point(aes(x = Date, y = Ozone, color = "blue"))
+  geom_point(aes(x = Date, y = Ozone), color = "blue") #Color command needs to be outside aes()
+print(O3plot2)
+
+O3plot2 <- ggplot(EPAair) +
+  geom_point(aes(x = Date, y = Ozone, color = Ozone)) #Color by ozone, but unnecessary here
 print(O3plot2)
 
 # Add additional variables
 PMplot <- 
-  ggplot(EPAair, aes(x = month, y = PM2.5, shape = as.factor(year), color = Site.Name)) +
-  geom_point()
+  ggplot(EPAair, aes(x = m, y = PM2.5, shape = as.factor(Y), color = Site.Name)) +
+  geom_point() 
 print(PMplot)
 
 # Separate plot with facets
 PMplot.faceted <-
-  ggplot(EPAair, aes(x = month, y = PM2.5, shape = as.factor(year))) +
+  ggplot(EPAair, aes(x = m, y = PM2.5, shape = as.factor(Y))) +
   geom_point() +
   facet_wrap(vars(Site.Name), nrow = 3)
 print(PMplot.faceted)
 
 PMplot.faceted2 <-
-  ggplot(EPAair, aes(x = month, y = PM2.5)) +
+  ggplot(EPAair, aes(x = m, y = PM2.5)) +
   geom_point() +
-  facet_grid(Site.Name ~ year)
+  facet_grid(Y ~ Site.Name)
 print(PMplot.faceted2)
 
 # Filter dataset within plot building
@@ -110,14 +114,21 @@ print(O3plot.Blackstone)
 # Exercise: build your own scatterplots of PeterPaul.chem.nutrients
 
 # 1. 
-# Plot surface temperatures by day of  year. 
+# Plot surface temperatures by day of year. 
 # Color your points by year, and facet by lake in two rows.
-
+TEMPplot.faceted <-
+  ggplot(subset(PeterPaul.chem.nutrients, depth = 0)) +
+  geom_point(aes(x = daynum, y = temperature_C, color = year4)) +
+  facet_wrap(vars(lakename), nrow = 2)
+print(TEMPplot.faceted)
 
 #2. 
 # Plot temperature by date. Color your points by depth.
 # Change the size of your point to 0.5
-
+Temp_Depth_plot <-
+  ggplot(subset(PeterPaul.chem.nutrients)) +
+  geom_point(aes(x = sampledate, y = temperature_C, color = depth), size = 0.5)
+print(Temp_Depth_plot)
 
 ```
 ### Plotting the relationship between two continuous variables: Scatterplot
@@ -142,7 +153,7 @@ tempvsdepth <-
   ggplot(PeterPaul.chem.nutrients, aes(x = temperature_C, y = depth)) +
   #ggplot(PeterPaul.chem.nutrients, aes(x = temperature_C, y = depth, color = daynum)) +
   geom_point() +
-  scale_y_reverse()
+  scale_y_reverse() #Reverse the y-axis
 print(tempvsdepth)
 
 NvsP <-
