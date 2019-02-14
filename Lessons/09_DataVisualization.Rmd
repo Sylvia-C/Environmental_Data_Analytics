@@ -257,7 +257,7 @@ print(PM2.5_year_bar)
 # Divide your graph by year and site.
 PM2.5_year_boxplot <-
   ggplot(EPAair_summary, aes(x = as.factor(Y), y = mean)) +
-  geom_boxplot(aes(color = Site.Name)) # still working
+  geom_boxplot(aes(color = Site.Name)) # still working on
 print(PM2.5_year_boxplot)
 
 ```
