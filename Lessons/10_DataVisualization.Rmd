@@ -138,7 +138,7 @@ print(NvsP)
 # change your legend labels
 NvsP2 <-
   ggplot(PeterPaul.chem.nutrients, aes(x = tp_ug, y = tn_ug, color = depth, shape = lakename)) +
-  geom_point(alpha = 0.8, size = 3) +
+  geom_point(alpha = 0.8, size = 3) + # alpha adjust transparency
   xlab("TP (\U003BCg/L)") +
   ylab("TN (\U003BCg/L)") +
   #labs(x="TP (\U003BCg/L)", y="TN (\U003BCg/L)", fill="Depth", shape="lake")
