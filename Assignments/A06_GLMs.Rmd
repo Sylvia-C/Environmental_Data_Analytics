@@ -1,6 +1,6 @@
 ---
 title: "Assignment 6: Generalized Linear Models"
-author: "Student Name"
+author: "Siying Chen"
 output: pdf_document
 geometry: margin=2.54cm
 editor_options: 
@@ -34,8 +34,21 @@ The completed exercise is due on Tuesday, 26 February, 2019 before class begins.
 
 ```{r}
 #1
+getwd()
+library(tidyverse)
+library(RColorBrewer)
+
+Ecotox <- read.csv("./Data/Raw/ECOTOX_Neonicotinoids_Mortality_raw.csv")
+NTL_LTER.ChemPhys <- read.csv("./Data/Raw/NTL-LTER_Lake_ChemistryPhysics_Raw.csv")
 
 #2
+mytheme <- theme_bw(base_size = 14) +
+  theme(axis.text = element_text(color = "black"), 
+        legend.position = "bottom",
+        panel.grid.major = element_line(size = 0.5, linetype = 'solid'), 
+        panel.grid.minor = element_line(size = 0.25, linetype = 'dashed'),
+        title = element_text(face = "bold"))
+theme_set(mytheme)
 
 ```
 
@@ -50,31 +63,57 @@ Research question: Were studies on various neonicotinoid chemicals conducted in 
 
 ```{r}
 #3
+length(unique(Ecotox$Chemical.Name))
 
 #4
+Ecotox_normality <- Ecotox %>%
+  group_by(Chemical.Name) %>%
+  summarise(W = shapiro.test(Pub..Year)$statistic,
+            p.value = shapiro.test(Pub..Year)$p.value) 
+# All p < 0.0001
+# reject the null hypothesis and conclude that none of the data is normally distributed
+
+qqnorm(Ecotox$Pub..Year); qqline(Ecotox$Pub..Year) # Q-Q plot confirms the previous conclusion
+
+ggplot(Ecotox, aes(x = Pub..Year, color = Chemical.Name)) +
+  geom_freqpoly(stat = "count") +
+  labs(x = "Publication year", y = "Count")
 
 #5
+Ecotox_variance <- bartlett.test(Ecotox$Pub..Year ~ Ecotox$Chemical.Name)
+# p < 0.0001
+# reject the null hypothesis and conclude that not all the variances for different chemical names are the same
 
 ```
 
 6. Based on your results, which test would you choose to run to answer your research question?
 
-> ANSWER: 
+> ANSWER: I would choose to run the one-way ANOVA test, because the there are multiple categories in the chemical names, and a one-way ANOVA test is similar to a two-sample t-test but for three or more groups.
 
 7. Run this test below. 
 
 8. Generate a boxplot representing the range of publication years for each chemical. Adjust your graph to make it pretty.
 ```{r}
 #7
+Ecotox.anova <- lm(Ecotox$Pub..Year ~ Ecotox$Chemical.Name)
+summary(Ecotox.anova)
 
 #8
+Ecotox.anova.plot <- ggplot(Ecotox, aes(x = Chemical.Name, y = Pub..Year, fill = Chemical.Name)) +
+  geom_boxplot(outlier.colour = "red") +
+  labs(y = "Publication Year", title = "Studies on neonicotinoid chemicals over years") +
+  theme(axis.text.x = element_blank(), axis.title.x = element_blank(), axis.ticks.x = element_blank()) +
+  scale_y_discrete(limits = c(1982, 1990, 2000, 2010, 2018)) +
+  scale_fill_brewer(palette = "Set3", name = "Chemical Name") +
+  guides(fill = guide_legend(nrow = 3,byrow = TRUE))
+print(Ecotox.anova.plot)
 
 ```
 
 
 9. How would you summarize the conclusion of your analysis? Include a sentence summarizing your findings and include the results of your test in parentheses at the end of the sentence. 
 
-> ANSWER: 
+> ANSWER: The publication years of each neonicotinoid chemicals are not normally distributed, and not all the variances for each neonicotinoid chemicals are the same. Most of the studies on neonicotinoid chemicals are published around 2014. However, studies on Nithiazine are mostly published around 1988, which is also the earlieststudies on neonicotinoid chemicals among these chosen chemicals. (one-way ANOVA; p < 0.0001, df = 1274, F = 33.21)
 
 ## NTL-LTER test
 Research question: What is the best set of predictors for lake temperatures in July across the monitoring period at the North Temperate Lakes LTER? 
@@ -89,30 +128,61 @@ Research question: What is the best set of predictors for lake temperatures in J
 
 ```{r}
 #11
+NTL_July <- NTL_LTER.ChemPhys %>%
+  filter(daynum >= 182 & daynum <= 212) %>%
+  select(lakename, year4, daynum, depth, temperature_C) %>%
+  na.omit()
 
 #12
+NTL_July_AIC <- lm(data = NTL_July, temperature_C ~ year4 + daynum + depth)
+step(NTL_July_AIC) 
+# year4 has the lowest AIC, which make it the best candidate
+# year4 and daynum daynum have similar AIC, which can mean they are redundant
+# also daynum is already included in the initial data filter
+# I would choose year and depth as explanatory variables
+
+NTL_July_MR <- lm(data = NTL_July, temperature_C ~ year4 + depth)
+summary(NTL_July_MR)
+
+NTL_July_MR_plot <- ggplot(NTL_July, aes(x = year4, y = temperature_C, color = depth)) +
+  geom_point(alpha = 0.8) +
+  labs(x = "Year", y = "Temperature (\u00B0C)", title = "North Temperate Lake Temperatures in July") +
+  scale_x_discrete(limits = c(1984, 1990, 1995, 2000, 2005, 2010, 2016)) +
+  scale_color_distiller(palette = "Blues", direction = 1, name = "Depth (m)") +
+  geom_smooth(method = "lm")
+print(NTL_July_MR_plot)
 
 ```
 
 13. What is the final linear equation to predict temperature from your multiple regression? How much of the observed variance does this model explain?
 
-> ANSWER: 
+> ANSWER: Temperature = 1.27 + 0.01(year) - 1.9(depth) + error. This model explains about 73.92% of the observed variance.
 
 14. Run an interaction effects ANCOVA to predict temperature based on depth and lakename from the same wrangled dataset.
 
 ```{r}
 #14
+Temp_ancova.interaction <- lm(data = NTL_July, temperature_C ~ lakename * depth)
+summary(Temp_ancova.interaction)
 
 ```
 
 15. Is there an interaction between depth and lakename? How much variance in the temperature observations does this explain?
 
-> ANSWER: 
+> ANSWER: Yes, lake temperature is associated with depth and lake name. This model can explain about 78.57% of the variance.
 
 16. Create a graph that depicts temperature by depth, with a separate color for each lake. Add a geom_smooth (method = "lm", se = FALSE) for each lake. Make your points 50 % transparent. Adjust your y axis limits to go from 0 to 35 degrees. Clean up your graph to make it pretty. 
 
 ```{r}
 #16
+Temp_ancova_plot <- ggplot(NTL_LTER.ChemPhys, aes(x = depth, y = temperature_C, color = lakename)) + 
+  geom_point(alpha = 0.5) + 
+  geom_smooth(method = "lm", se = FALSE) +
+  ylim(0,35) +
+  labs(x = "Depth (m)", y = "Temperature (\u00B0C)", title = "Lake Temperature over Depth") +
+  scale_color_brewer(palette = "Set1", name = "Lake Name") +
+  guides(color = guide_legend(nrow = 3,byrow = TRUE))
+print(Temp_ancova_plot)
 
 ```
 

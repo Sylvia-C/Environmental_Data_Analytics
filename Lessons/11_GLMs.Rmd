@@ -132,7 +132,7 @@ ggplot(EPAair, aes(x = PM2.5, color = Site.Name)) +
   geom_freqpoly(stat = "count")
 qqnorm(EPAair$PM2.5); qqline(EPAair$PM2.5)
 
-bartlett.test(EPAair$PM2.5 ~ EPAair$Site.Name) # they're not significantly different
+bartlett.test(EPAair$PM2.5 ~ EPAair$Site.Name) # test for more multiple variances, they're not significantly different
 
 # Format as a GLM
 PM2.5.anova <- lm(EPAair$PM2.5 ~ EPAair$Site.Name)
