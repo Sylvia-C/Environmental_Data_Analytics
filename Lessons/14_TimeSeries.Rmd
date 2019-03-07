@@ -77,7 +77,8 @@ Peter.nutrients.surface <- filter(PeterPaul.nutrients.surface, lakename == "Pete
 Paul.nutrients.surface <- filter(PeterPaul.nutrients.surface, lakename == "Paul Lake")
 
 # Run a Mann-Kendall test
-mk.test(Peter.nutrients.surface$tp_ug)
+mk.test(Peter.nutrients.surface$tp_ug) #not really looking at dates, just looking at relative position
+#p<0.0001, reject null so there is a trend, the further the z score from 0, the stronger the relationship
 
 ```
 
@@ -87,18 +88,18 @@ However, it looks like there might be a breakpoint in our dataset. Further, we k
 Pettitt's test is also included in the `trend` package. This nonparametric test will determine whether there is a shift in the central tendency of the time series and will tell us at what point the changepoint occurs (if it detects one). Note: Pettitt's Test will only test for one changepoint, and further tests must be run if multiple change points are suspected.
 ```{r}
 # Test for change point
-pettitt.test(Peter.nutrients.surface$tp_ug)
+pettitt.test(Peter.nutrients.surface$tp_ug) #p<0.0001, reject null and there is a change point, at k=35
 
 # Run separate Mann-Kendall for each change point
-mk.test(Peter.nutrients.surface$tp_ug[1:34])
-mk.test(Peter.nutrients.surface$tp_ug[35:132])
+mk.test(Peter.nutrients.surface$tp_ug[1:34]) #not detected a trend
+mk.test(Peter.nutrients.surface$tp_ug[35:132]) #not detected a trend, might be obscured by a increase and decrease
 
 # Is there a second change point?
-pettitt.test(Peter.nutrients.surface$tp_ug[35:132])
+pettitt.test(Peter.nutrients.surface$tp_ug[35:132]) #second change point at 35+79=114
 
 # Run another Mann-Kendall for the second change point
-mk.test(Peter.nutrients.surface$tp_ug[35:113])
-mk.test(Peter.nutrients.surface$tp_ug[114:132])
+mk.test(Peter.nutrients.surface$tp_ug[35:113]) #increasing trend(positive z)
+mk.test(Peter.nutrients.surface$tp_ug[114:132]) #no significatn trend
 
 # Run the same test for Paul Lake. 
 mk.test(Paul.nutrients.surface$tp_ug)
@@ -107,7 +108,11 @@ pettitt.test(Paul.nutrients.surface$tp_ug)
 # Add vertical lines to the original graph to represent change points
 ggplot(PeterPaul.nutrients.surface, aes(x = sampledate, y = tp_ug, color = lakename)) + 
   geom_point() +
-  scale_color_manual(values = c("#7fcdbb", "#253494"))
+  scale_color_manual(values = c("#7fcdbb", "#253494")) +
+  geom_vline(xintercept = as.Date("1993-05-20"),
+             color = "#253494", lty = 2) +
+  geom_vline(xintercept = as.Date("1998-01-01"),
+             color = "#253494", lty = 2)
 
 ```
 ### Seasonal Mann-Kendall
@@ -139,7 +144,7 @@ Some situations may require us to predict values for data points that fall withi
 
 Question: Under what circumstances would you consider each of these options for interpolation? 
 
-> ANSWER: 
+> ANSWER: mean when values are usually similar, linear is connecting point with straight line, spline is smooth line
 
 Tip: Check your dataset to see if there is an NA value in the first row. You may need to add a value for that first row or trim the dataset so that the new first row corresponds to the first measurement.
 
@@ -157,12 +162,12 @@ USGS.flow.data.interpolated$Date <- as.Date(USGS.flow.data.interpolated$Date,
 
 # Create a time series object
 USGS.flow.data.timeseries <- ts(USGS.flow.data.interpolated$Discharge, 
-                                start = c(2009, 1) ,frequency = 12)
+                                start = c(2009, 1) ,frequency = 12) #monthly time series
 
 # Run a Seasonal Mann-Kendall test
 USGS.smktest <- smk.test(USGS.flow.data.timeseries)
 USGS.smktest
-summary(USGS.smktest)
+summary(USGS.smktest) #winter has the most significant increases, not seeing increases in July
 ```
 
 Interpreting results of the Seasonal Mann-Kendall Test: 
