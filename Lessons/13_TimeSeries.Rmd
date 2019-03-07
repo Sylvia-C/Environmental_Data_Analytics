@@ -89,9 +89,9 @@ Next, we will determine the degree of temporal autocorrelation in our dataset. W
 TempTest.auto <- lme(data = PeterPaul.summertemp,
                      temperature_C ~ sampledate * lakename, 
                      random = ~1|Week)
-TempTest.auto
+TempTest.auto # Week as random effect: what is the variance of the weeks
 
-ACF(TempTest.auto)
+ACF(TempTest.auto) # 0.42324818， which means 42% 
 
 ```
 This model structure should look familiar, with a typical linear model structure and dataframe defined. The addition here is that we have defined Week as a random variable. Essentially, we are interested not in the specific effects of each week but in the variability among weeks, so we have defined it as a random effect (essentially coming from a larger distribution of seasonal variability). The ~1 statement indicates that each week has its own intercept in the model. From here, we want to take the first order correlation to specify our autocorrelation structure. From the ACF output, we take the 2nd value (the innermost group level) to define the degree of autocorrelation. This number will always fall between 0 and 1. Notice that there is a fairly large degree of autocorrelation in our variables.
@@ -110,6 +110,7 @@ TempTest.mixed <- lme(data = PeterPaul.summertemp,
                      #define method as restricted maximum likelihood
                      method = "REML")
 summary(TempTest.mixed)
+# The stdDev is sligtly lower than the previous model; the temperature increases by 0.0001*365*20 in 20 years
 
 # Compare the random effects model with the fixed effects model
 TempTest.fixed <- gls(data = PeterPaul.summertemp,
