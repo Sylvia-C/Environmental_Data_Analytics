@@ -1,6 +1,6 @@
 ---
 title: "Assignment 8: Time Series Analysis"
-author: "Student Name"
+author: "Siying Chen"
 output: pdf_document
 geometry: margin=2.54cm
 editor_options: 
@@ -32,12 +32,33 @@ The completed exercise is due on Tuesday, 19 March, 2019 before class begins.
 
 Question: Did you do this?
 
-> ANSWER: 
+> ANSWER: Yes. I'll use the NTL_LTER nutrient and chemical/physical dataset along with the phytoplankton dataset I found online and perform time series analysis to find out the relationship between phytoplankton and nutrients/D.O./irradiance over time.
 
 ## Set up your session 
 2. Set up your session. Upload the EPA air quality raw dataset for PM2.5 in 2018, and the processed NTL-LTER dataset for nutrients in Peter and Paul lakes. Build a ggplot theme and set it as your default theme. Make sure date variables are set to a date format.
 
 ```{r}
+getwd()
+library(tidyverse)
+library(lubridate)
+library(nlme)
+library(lsmeans)
+library(multcompView)
+library(trend)
+
+PM2.5 <- read.csv("./Data/Raw/EPAair_PM25_NC2018_raw.csv")
+PM2.5$Date <- as.Date(PM2.5$Date, format = "%m/%d/%y")
+
+PeterPaul.nutrients <- read.csv("./Data/Processed/NTL-LTER_Lake_Nutrients_PeterPaul_Processed.csv")
+PeterPaul.nutrients$sampledate <- as.Date(PeterPaul.nutrients$sampledate, format = "%Y-%m-%d")
+
+mytheme <- theme_bw(base_size = 14) +
+  theme(axis.text = element_text(color = "black"), 
+        legend.position = "bottom",
+        panel.grid.major = element_line(size = 0.5, linetype = 'solid'), 
+        panel.grid.minor = element_line(size = 0.25, linetype = 'dashed'),
+        title = element_text(face = "bold"))
+theme_set(mytheme)
 
 ```
 
@@ -51,6 +72,12 @@ Research question: Do PM2.5 concentrations have a significant trend in 2018?
 3a. Illustrate PM2.5 concentrations by date. Do not split aesthetics by site.
 
 ```{r}
+PM2.5.plot <- ggplot(PM2.5, aes(x = Date, y = Daily.Mean.PM2.5.Concentration)) +
+  geom_point(alpha = 0.3) +
+  ylab("Daily Mean PM 2.5 Concentration") +
+  scale_x_date(date_breaks = "1 month") +
+  theme(axis.text.x = element_text(angle=90))
+print(PM2.5.plot)
 
 ```
 
@@ -63,23 +90,47 @@ PM2.5 = PM2.5[!duplicated(PM2.5$Date),]
 3d. Run a mixed effects model. 
 
 ```{r}
+# Remove duplicate data
+PM2.5 = PM2.5[order(PM2.5[,'Date'],-PM2.5[,'Site.ID']),]
+PM2.5 = PM2.5[!duplicated(PM2.5$Date),]
+
+# Temporal autocorrelation test
+PM2.5.auto <- lme(data = PM2.5,
+                 Daily.Mean.PM2.5.Concentration ~ Date,
+                 random = ~1|Site.Name)
+PM2.5.auto 
+ACF(PM2.5.auto)
+
+# Mixed effect model
+PM2.5.mixed <- lme(data = PM2.5,
+                  Daily.Mean.PM2.5.Concentration ~ Date, 
+                  random = ~1|Site.Name,
+                  correlation = corAR1(form = ~ Date|Site.Name, value = 0.514),
+                  method = "REML")
+summary(PM2.5.mixed)
 
 ```
 
 Is there a significant increasing or decreasing trend in PM2.5 concentrations in 2018? 
 
-> ANSWER: 
+> ANSWER: There is no significant trend detected in PM2.5 concentrations in 2018 since p-value is greater than 0.05.
 
 3e. Run a fixed effects model with Date as the only explanatory variable. Then test whether the mixed effects model is a better fit than the fixed effect model. 
 
 ```{r}
+PM2.5.fixed <- gls(data = PM2.5,
+                   Daily.Mean.PM2.5.Concentration ~ Date * Site.Name,
+                   method = "REML")
+summary(PM2.5.fixed)
+
+anova(PM2.5.mixed, PM2.5.fixed)
 
 ```
 
 
 Which model is better?
 
-> ANSWER: 
+> ANSWER: The mixed effects model is better since it has a lower AIC. P-value is <.0001, which means the two models have a significantly different fit.
 
 
 ## Run a Mann-Kendall test
@@ -89,17 +140,57 @@ Research question: Is there a trend in total N surface concentrations in Peter a
 4. Duplicate the Mann-Kendall test we ran for total P in class, this time with total N for both lakes. Make sure to run a test for changepoints in the datasets (and run a second one if a second change point is likely). 
 
 ```{r}
+# Wrangle our dataset
+PeterPaul.nutrients.surface <- 
+  PeterPaul.nutrients %>%
+  select(-lakeid, -depth_id, -comments) %>%
+  filter(depth == 0) %>%
+  filter(!is.na(tn_ug))
+
+# Split dataset by lake
+Peter.nutrients.surface <- filter(PeterPaul.nutrients.surface, lakename == "Peter Lake")
+Paul.nutrients.surface <- filter(PeterPaul.nutrients.surface, lakename == "Paul Lake")
+
+# Run a Mann-Kendall test
+mk.test(Peter.nutrients.surface$tn_ug)
+
+# Test for change point
+pettitt.test(Peter.nutrients.surface$tn_ug) # change point at k=36
+
+# Run separate Mann-Kendall for each change point
+mk.test(Peter.nutrients.surface$tn_ug[1:35]) # no trend detected
+mk.test(Peter.nutrients.surface$tn_ug[36:98]) # trend detected
+
+# Is there a second change point?
+pettitt.test(Peter.nutrients.surface$tn_ug[36:98]) #second change point at 36+21=57
+
+# Run another Mann-Kendall for the second change point
+mk.test(Peter.nutrients.surface$tn_ug[36:56]) # no significatn trend
+mk.test(Peter.nutrients.surface$tn_ug[57:98]) # no significatn trend
+
+# Run the same test for Paul Lake. 
+mk.test(Paul.nutrients.surface$tn_ug) # no significant trend
+pettitt.test(Paul.nutrients.surface$tn_ug)
 
 ```
 
 
 What are the results of this test?
 
-> ANSWER: 
+> ANSWER: For Peter lake, there's a significant trend detected at time location 36 (1993-06-02), the second Mann-Kendall test reveals that there's a second change point from time location 36 to 98, the second change point it at 36+21=57 (1994-06-29), there is no more trend detected in the rest of the time segments. For Paul lake, there's no significant trend detected.
 
 5. Generate a graph that illustrates the TN concentrations over time, coloring by lake and adding vertical line(s) representing changepoint(s).
 
 ```{r}
-
+TN_mktest <- ggplot(PeterPaul.nutrients.surface, aes(x = sampledate, y = tn_ug, color = lakename)) + 
+  geom_point() +
+  scale_color_manual(values = c("#7fcdbb", "#253494")) +
+  geom_vline(xintercept = as.Date("1993-06-02"),
+             color = "purple", lty = 2) +
+  geom_vline(xintercept = as.Date("1994-06-29"),
+             color = "red", lty = 2) +
+  labs(x = "Sample Date", y = "TN (µg/L)")
+print(TN_mktest)
+  
 ```
 
