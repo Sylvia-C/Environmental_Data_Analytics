@@ -75,7 +75,7 @@ This is more of a proof of concept than a useful map. We can sort of visualize s
 See https://rdrr.io/cran/mapview/man/mapviewOptions.html for more info.
 ```{r Plot EPA locations with `mapview`}
 #(Install and) Load the mapView package
-#install.packages('mapview')
+install.packages('mapview')
 library(mapview)
 
 #Set the available map backgrounds
@@ -316,25 +316,33 @@ mapView(counties_sf)
 
 ```{r read HUCs shapefile}
 #Read the shapefile into an sf dataframe named "huc8_sf"
-huc8_sf <-   
+huc8_sf <- st_read('./Data/Spatial/huc_250k_nc.shp')
 
 #Check the CRS
-
+st_crs(huc8_sf)
 
 #Exaimine the column names
-
+names(huc8_sf)
 
 #View the data as a map
-
+mapView(huc8_sf)
 ```
 
 > _Challenge_: Read in the NC 8-Digit HUC dataset again, but this time _filter_ the data so the result only includes the one with a HUC_NAME value of 'Upper Neuse'.
 
 ```{r Select the Upper Neuse HUC 8}
 #Read the shapefile into an sf dataframe
-upperNeuse_sf <-  
-  
+upperNeuse_sf <- st_read('./Data/Spatial/huc_250k_nc.shp') %>%
+  filter(HUC_NAME == "Upper Neuse")
 
+#Check the CRS
+st_crs(upperNeuse_sf)
+
+#Exaimine the column names
+names(upperNeuse_sf)
+
+#View the data as a map
+mapView(upperNeuse_sf)
 ```
 
 
@@ -342,7 +350,7 @@ upperNeuse_sf <-
 ```{r Dissolve all counties into a single feature}
 #Aggregate the data using group_by and summarize, just as you would a non-spatial dataframe
 state_sf <- counties_sf %>% 
-  group_by('STATEFP') %>% 
+  group_by(STATEFP) %>% 
   summarize(ALAND = sum(ALAND))
 
 #View the data
@@ -356,8 +364,9 @@ mapview(state_sf2)
 > Now you try it: Aggregate the HUC data on the SUB attribute, computing the sum of the "AREA" field and view the result. 
 
 ```{r Aggregate the HUC data on an attribute, saving as huc2_sf}
-huc2_sf <- 
-  
+huc2_sf <- huc8_sf %>%
+  group_by(SUB) %>%
+  summarize(sumAREA = sum(AREA))
   
 mapview(huc2_sf)
 ```
@@ -385,7 +394,7 @@ huc2_WGS84<- st_transform(huc2_sf,c=4326)
 #Now plot with leaflet: no errors as all layers are in Leaflet's native CRS (WGS84)
 leaflet() %>% addTiles() %>% 
   addPolygons(data=counties_WGS84,weight=1,color='red') %>% 
-  addPolygons(data=huc8s_WGS84,weight=1)
+  addPolygons(data=huc8s_WGS84,weight=1) #leaflet can only plot wgs84
 ```
 
 
@@ -458,10 +467,12 @@ mapview(huc2_UTM_nc)
 > Exercise: Try subsetting the huc2_UTM dataset for SUB = 0302, then clipping counties with that subset.
 
 ```{r EXERCISE: Clip the counties dataset with the border of HUC 0302}
-huc0302_counties <- 
+huc0302 <- huc2_utm %>%
+  filter(SUB == "0302")
+huc0302_counties <- st_intersection(counties_sf_utm, huc0302)
   
 #Map the product, showing values by land area
-mapview(huc0302_counties['ALAND'])
+mapview(huc0302_counties['ALAND'], legend = FALSE)
 ```
 
 
@@ -471,7 +482,7 @@ To add more attributes to our spatial features, we can merge records just as we 
 ```{r Join demographic data to county features}
 #Read in the demographic data
 demog_df <- read.csv('./Data/Spatial/NC_Demography.csv') %>% 
-  mutate(FIPS = as.factor(FIPS))                                 #Convert the FIPS variable to a factor
+  mutate(FIPS = as.factor(FIPS))                      #Convert the FIPS variable to a factor
 
 #Join the two datasets using "GEOID" from the left dataset and "FIPS" from the right
 counties_sf_utm_join <- counties_sf_utm %>% 
