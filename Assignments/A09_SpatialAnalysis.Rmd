@@ -1,12 +1,15 @@
 ---
-title: "Assignment: Spatial Analysis in R"
+title: 'Assignment: Spatial Analysis in R'
 author: "Siying Chen"
-output:
-  html_document:
-    toc: true
-    toc_depth: 2
-    theme: "cosmo"
 geometry: margin=2.54cm
+output:
+  pdf_document:
+    toc: yes
+    toc_depth: '2'
+  html_document:
+    theme: cosmo
+    toc: yes
+    toc_depth: 2
 editor_options:
   chunk_output_type: console
 ---
@@ -160,7 +163,6 @@ ggplot() +
 
 ### 9. Select the gages falling within a given county
 Now let's zoom into a particular county and examine the gages located there. 
-* Import the HUC8 dataset (`NE_HUC8s_prj.shp` in the Data\Spatial folder)
 * Select Lancaster county from your county sf dataframe
 * Select the gage sites falling `within` that county
  * Remember you'll have to create a mask and then apply that mask
@@ -170,12 +172,22 @@ Now let's zoom into a particular county and examine the gages located there.
  * and the gage sites in that county
 ```{r}
 #Select the county
-NE_HUC8 <- st_read('./Data/Spatial/NE_HUC8s_prj.shp') 
+Lancaster_county <- NE_counties_utm %>%
+  filter(NAME == "Lancaster")
 
 #Select gages within 
+resultMask <- st_intersects(Lancaster_county, 
+                            new_NWIS_gage_sf_utm,
+                            sparse = FALSE)
+
+Lancaster_gage <- new_NWIS_gage_sf_utm[resultMask,]
 
 #Plot
-
+ggplot() +
+  geom_sf(data = NE_counties, col='black') +
+  geom_sf(data = Lancaster_county, col='red') +
+  geom_sf(data = Lancaster_gage, col='blue', size = 0.7) 
+  
 ```
 
 
@@ -191,11 +203,16 @@ attributes of the county in which it is located.
   * Display each gage size proportional to its "gage_ht" value
 ```{r Spatial Join}
 #Join features
+county_gage <- st_join(new_NWIS_gage_sf_utm, NE_counties_utm)
 
 #Show column names
+colnames(county_gage)
 
 #Plot
-
+ggplot() +
+  geom_sf(data = NE_counties_utm, col='black') +
+  geom_sf(data = county_gage, aes(color = NAME, size = gage_ht)) +
+  theme(legend.position = "none")
 ```
 
 ### 11. Summarize data by county
@@ -210,12 +227,20 @@ it's mean gage height.
  * Not all counties will have data
 ```{r}
 #Group and summarize
+county_gage_summary <- county_gage %>%
+  na.omit() %>%
+  group_by(NAME) %>%
+  summarize(mean_gage_ht = mean(gage_ht))
 
 #Convert result to a simple dataframe
+summary_simple <- st_drop_geometry(county_gage_summary)
 
 #Join summary to County fc
+county_summary_join <- left_join(NE_counties, summary_simple, by = c("NAME", "NAME"))
 
 #Plot
-
+ggplot() +
+  geom_sf(data = county_summary_join, aes(fill = mean_gage_ht)) +
+  scale_fill_gradient("BIR74",low='white',high='darkblue')
 ```
 
