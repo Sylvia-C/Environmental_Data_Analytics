@@ -47,10 +47,14 @@ ui <- navbarPage('probability distributions', id = 'nav', # specifies panels at 
                               sliderInput('pn',
                                           'sample size'),
                               sliderInput('lambda',
-                                          '$$\\lambda$$'),
+                                          withMathJax('$$\\lambda$$'),
+                                          min = 0,
+                                          max = 10,
+                                          value = 5,
+                                          step = 0.1),
                               checkboxInput('phist', label = 'histogram', value = TRUE), 
                               checkboxInput('pdens', label = 'density', value = TRUE),
-                              colourInput('pcol', label = 'select a color')
+                              colourInput('pcol', label = 'select a color', , value = '#9EB4FC')
                             ),
                             mainPanel(
                               tabsetPanel(position = 'below',
@@ -76,7 +80,10 @@ ui <- navbarPage('probability distributions', id = 'nav', # specifies panels at 
                                           max = 20,
                                           value = 10),
                               sliderInput('bprob',
-                                          'probability'),
+                                          'probability',
+                                          min = 0,
+                                          max = 1,
+                                          value = 0.5), #not sure about the limits
                               checkboxInput('bhist', label = 'histogram', value = TRUE), 
                               checkboxInput('bdens', label = 'density', value = TRUE),
                               colourInput('bcol', label = 'select a color', value = '#FF6666')
@@ -190,9 +197,11 @@ server <- function(input, output) {
     x <- rpois(input$pn, input$lambda) 
     
     p <- ggplot() + scale_x_continuous(limits = c(0, 20))
-
+    if(input$phist) p <- p + geom_histogram(aes(x, y = ..density..), bins = bins, colour = 'black', fill = 'white') 
+    if(input$pdens) p <- p + geom_density(aes(x), alpha = 0.2, fill = input$pcol) 
     p + theme_minimal()
   })
+  
     # qq plot
   
   output$pplot <- renderPlot({
